@@ -56,13 +56,28 @@
       max-width: 900px;
       margin: auto;
     }
+
+    .btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: #e68900;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Laporan Keuangan<br>Roti Bakar Sari Edo Group</h1>
 
-    <table>
+    <table id="laporanTable">
       <thead>
         <tr>
           <th>No</th>
@@ -71,7 +86,7 @@
           <th>Pengeluaran (Rp)</th>
         </tr>
       </thead>
-      <tbody contenteditable="true">
+      <tbody>
         <tr>
           <td>1</td>
           <td><input type="text" value="Penjualan Roti Bakar"></td>
@@ -92,6 +107,38 @@
         </tr>
       </tbody>
     </table>
+
+    <button class="btn" onclick="tambahBaris()">+ Tambah Baris</button>
+    <button class="btn" onclick="simpanData()">💾 Simpan</button>
   </div>
-</body>
-</html>
+
+  <script>
+    const table = document.getElementById("laporanTable").getElementsByTagName("tbody")[0];
+
+    // Simpan ke LocalStorage
+    function simpanData() {
+      let data = [];
+      for (let i = 0; i < table.rows.length; i++) {
+        let row = table.rows[i];
+        data.push({
+          no: row.cells[0].innerText,
+          keterangan: row.cells[1].children[0].value,
+          pemasukan: row.cells[2].children[0].value,
+          pengeluaran: row.cells[3].children[0].value
+        });
+      }
+      localStorage.setItem("laporanKeuangan", JSON.stringify(data));
+      alert("✅ Data berhasil disimpan!");
+    }
+
+    // Load dari LocalStorage
+    function loadData() {
+      let data = localStorage.getItem("laporanKeuangan");
+      if (data) {
+        data = JSON.parse(data);
+        table.innerHTML = "";
+        data.forEach((row, index) => {
+          let newRow = table.insertRow();
+          newRow.innerHTML = `
+            <td>${index+1}</td>
+            <td><input type="text" value="${row.keterangan}">
