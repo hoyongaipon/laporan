@@ -91,6 +91,7 @@
           <th>No</th>
           <th>Tanggal</th>
           <th>Menu Pembelian</th>
+          <th>Rasa Roti</th>
           <th>PCS</th>
           <th>Harga Satuan (Rp)</th>
           <th>Harga Total (Rp)</th>
@@ -104,7 +105,8 @@
         <tr>
           <td>1</td>
           <td><input type="date" value="2025-08-29"></td>
-          <td><input type="text" value="Roti Bakar Coklat"></td>
+          <td><input type="text" value="Roti Bakar"></td>
+          <td><input type="text" value="Coklat"></td>
           <td><input type="number" value="2"></td>
           <td><input type="number" value="20000"></td>
           <td><input type="number" value="40000" readonly></td>
@@ -136,15 +138,15 @@
 
       for (let i = 0; i < table.rows.length; i++) {
         let row = table.rows[i];
-        let pcs = parseFloat(row.cells[3].children[0].value) || 0;
-        let hargaSatuan = parseFloat(row.cells[4].children[0].value) || 0;
+        let pcs = parseFloat(row.cells[4].children[0].value) || 0; // pindah index karena ada kolom rasa
+        let hargaSatuan = parseFloat(row.cells[5].children[0].value) || 0;
         let hargaTotal = pcs * hargaSatuan;
-        row.cells[5].children[0].value = hargaTotal;
+        row.cells[6].children[0].value = hargaTotal;
 
-        let keluarRp = parseFloat(row.cells[8].children[0].value) || 0;
+        let keluarRp = parseFloat(row.cells[9].children[0].value) || 0;
 
         let saldoSekarang = saldoSebelumnya + hargaTotal - keluarRp;
-        row.cells[6].children[0].value = saldoSekarang;
+        row.cells[7].children[0].value = saldoSekarang;
 
         saldoSebelumnya = saldoSekarang;
         totalPengeluaran += keluarRp;
@@ -164,13 +166,14 @@
           no: row.cells[0].innerText,
           tanggal: row.cells[1].children[0].value,
           menu: row.cells[2].children[0].value,
-          pcs: row.cells[3].children[0].value,
-          hargaSatuan: row.cells[4].children[0].value,
-          hargaTotal: row.cells[5].children[0].value,
-          saldo: row.cells[6].children[0].value,
-          masuk: row.cells[7].children[0].value,   // sekarang berupa teks
-          keluarRp: row.cells[8].children[0].value,
-          barangKeluar: row.cells[9].children[0].value
+          rasa: row.cells[3].children[0].value,
+          pcs: row.cells[4].children[0].value,
+          hargaSatuan: row.cells[5].children[0].value,
+          hargaTotal: row.cells[6].children[0].value,
+          saldo: row.cells[7].children[0].value,
+          masuk: row.cells[8].children[0].value,
+          keluarRp: row.cells[9].children[0].value,
+          barangKeluar: row.cells[10].children[0].value
         });
       }
       localStorage.setItem("laporanKeuangan", JSON.stringify(data));
@@ -189,6 +192,7 @@
             <td>${index+1}</td>
             <td><input type="date" value="${row.tanggal}"></td>
             <td><input type="text" value="${row.menu}"></td>
+            <td><input type="text" value="${row.rasa}"></td>
             <td><input type="number" value="${row.pcs}"></td>
             <td><input type="number" value="${row.hargaSatuan}"></td>
             <td><input type="number" value="${row.hargaTotal}" readonly></td>
@@ -211,6 +215,7 @@
         <td>${rowCount+1}</td>
         <td><input type="date"></td>
         <td><input type="text"></td>
+        <td><input type="text"></td>
         <td><input type="number" value="0"></td>
         <td><input type="number" value="0"></td>
         <td><input type="number" value="0" readonly></td>
@@ -227,16 +232,16 @@
     function tambahListener() {
       for (let i = 0; i < table.rows.length; i++) {
         let row = table.rows[i];
-        row.cells[3].children[0].addEventListener("input", hitungSaldo);
-        row.cells[4].children[0].addEventListener("input", hitungSaldo);
-        row.cells[8].children[0].addEventListener("input", hitungSaldo);
+        row.cells[4].children[0].addEventListener("input", hitungSaldo); // PCS
+        row.cells[5].children[0].addEventListener("input", hitungSaldo); // Harga Satuan
+        row.cells[9].children[0].addEventListener("input", hitungSaldo); // Pengeluaran
       }
     }
 
     // Export CSV
     function exportCSV() {
       hitungSaldo();
-      let csv = "No,Tanggal,Menu Pembelian,PCS,Harga Satuan,Harga Total,Saldo,Barang Masuk,Total Pengeluaran,Nama Barang Pengeluaran\n";
+      let csv = "No,Tanggal,Menu Pembelian,Rasa Roti,PCS,Harga Satuan,Harga Total,Saldo,Barang Masuk,Total Pengeluaran,Nama Barang Pengeluaran\n";
       for (let i = 0; i < table.rows.length; i++) {
         let row = table.rows[i];
         let values = [
@@ -249,7 +254,8 @@
           row.cells[6].children[0].value,
           row.cells[7].children[0].value,
           row.cells[8].children[0].value,
-          row.cells[9].children[0].value
+          row.cells[9].children[0].value,
+          row.cells[10].children[0].value
         ];
         csv += values.join(",") + "\n";
       }
