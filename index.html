@@ -53,7 +53,7 @@
     }
 
     .container {
-      max-width: 1150px;
+      max-width: 1200px;
       margin: auto;
     }
 
@@ -71,6 +71,14 @@
     .btn:hover {
       background: #e68900;
     }
+
+    .summary {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body>
@@ -86,10 +94,9 @@
           <th>PCS</th>
           <th>Harga Satuan (Rp)</th>
           <th>Harga Total (Rp)</th>
-          <th>Keterangan</th>
           <th>Saldo (Rp)</th>
           <th>Barang Masuk (PCS)</th>
-          <th>Barang Keluar (PCS)</th>
+          <th>Total Pengeluaran (Rp)</th>
           <th>Nama Barang Pengeluaran</th>
         </tr>
       </thead>
@@ -101,11 +108,10 @@
           <td><input type="number" value="2"></td>
           <td><input type="number" value="20000"></td>
           <td><input type="number" value="40000" readonly></td>
-          <td><input type="text" value="Penjualan"></td>
           <td><input type="number" value="40000" readonly></td>
           <td><input type="number" value="2"></td>
           <td><input type="number" value="0"></td>
-          <td><input type="text" value=""></td>
+          <td><input type="text"></td>
         </tr>
       </tbody>
     </table>
@@ -114,94 +120,43 @@
     <button class="btn" onclick="simpanData()">💾 Save</button>
     <button class="btn" onclick="exportCSV()">⬇️ Export CSV</button>
 
-    <div style="margin-top:20px; font-weight:bold;">
-      <p>Total Barang Masuk: <span id="totalMasuk">0</span> PCS</p>
-      <p>Total Barang Keluar: <span id="totalKeluar">0</span> PCS</p>
-      <p>Saldo Akhir: <span id="saldoAkhir">0</span> Rp</p>
+    <div class="summary">
+      <span id="totalMasuk">Total Barang Masuk: 0 PCS</span>
+      <span id="totalKeluar">Total Pengeluaran: Rp 0</span>
+      <span id="saldoAkhir">Saldo Akhir: Rp 0</span>
     </div>
   </div>
 
   <script>
     const table = document.getElementById("laporanTable").getElementsByTagName("tbody")[0];
 
-    // Hitung ulang saldo dan stok otomatis
+    // Hitung ulang otomatis
     function hitungSaldo() {
       let saldoSebelumnya = 0;
       let totalMasuk = 0;
-      let totalKeluar = 0;
+      let totalPengeluaran = 0;
 
       for (let i = 0; i < table.rows.length; i++) {
         let row = table.rows[i];
         let pcs = parseFloat(row.cells[3].children[0].value) || 0;
-        let harga = parseFloat(row.cells[4].children[0].value) || 0;
-        let masuk = parseFloat(row.cells[8].children[0].value) || 0;
-        let keluar = parseFloat(row.cells[9].children[0].value) || 0;
-
-        let hargaTotal = pcs * harga;
+        let hargaSatuan = parseFloat(row.cells[4].children[0].value) || 0;
+        let hargaTotal = pcs * hargaSatuan;
         row.cells[5].children[0].value = hargaTotal;
 
-        let saldoSekarang = saldoSebelumnya + (masuk * harga) - (keluar * harga);
-        row.cells[7].children[0].value = saldoSekarang;
+        let masuk = parseFloat(row.cells[7].children[0].value) || 0;
+        let keluarRp = parseFloat(row.cells[8].children[0].value) || 0;
+
+        let saldoSekarang = saldoSebelumnya + hargaTotal - keluarRp;
+        row.cells[6].children[0].value = saldoSekarang;
+
         saldoSebelumnya = saldoSekarang;
-
         totalMasuk += masuk;
-        totalKeluar += keluar;
+        totalPengeluaran += keluarRp;
       }
 
-      document.getElementById("totalMasuk").innerText = totalMasuk;
-      document.getElementById("totalKeluar").innerText = totalKeluar;
-      document.getElementById("saldoAkhir").innerText = saldoSebelumnya;
-    }
-
-    // Tambah baris baru
-    function tambahBaris(copyTanggal = true) {
-      let rowCount = table.rows.length;
-      let lastRow = table.rows[rowCount - 1];
-      let tanggalSebelumnya = lastRow ? lastRow.cells[1].children[0].value : "";
-
-      let row = table.insertRow();
-      row.innerHTML = `
-        <td>${rowCount+1}</td>
-        <td><input type="date" value="${copyTanggal ? tanggalSebelumnya : ""}"></td>
-        <td><input type="text"></td>
-        <td><input type="number" value="1"></td>
-        <td><input type="number" value="0"></td>
-        <td><input type="number" value="0" readonly></td>
-        <td><input type="text"></td>
-        <td><input type="number" value="0" readonly></td>
-        <td><input type="number" value="0"></td>
-        <td><input type="number" value="0"></td>
-        <td><input type="text"></td>
-      `;
-      tambahListener();
-      hitungSaldo();
-    }
-
-    // Event Enter untuk menambah baris
-    function enterTambahBaris(e, rowIndex) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (rowIndex === table.rows.length - 1) {
-          tambahBaris(true);
-        }
-      }
-    }
-
-    // Tambahkan listener untuk update saldo saat edit
-    function tambahListener() {
-      for (let i = 0; i < table.rows.length; i++) {
-        let row = table.rows[i];
-        for (let j = 1; j < row.cells.length; j++) {
-          let input = row.cells[j].children[0];
-          if (input) {
-            input.removeEventListener("input", hitungSaldo);
-            input.addEventListener("input", hitungSaldo);
-
-            input.removeEventListener("keydown", function(){});
-            input.addEventListener("keydown", (e) => enterTambahBaris(e, i));
-          }
-        }
-      }
+      document.getElementById("totalMasuk").innerText = "Total Barang Masuk: " + totalMasuk + " PCS";
+      document.getElementById("totalKeluar").innerText = "Total Pengeluaran: Rp " + totalPengeluaran;
+      document.getElementById("saldoAkhir").innerText = "Saldo Akhir: Rp " + saldoSebelumnya;
     }
 
     // Simpan ke LocalStorage
@@ -215,13 +170,12 @@
           tanggal: row.cells[1].children[0].value,
           menu: row.cells[2].children[0].value,
           pcs: row.cells[3].children[0].value,
-          harga: row.cells[4].children[0].value,
-          total: row.cells[5].children[0].value,
-          keterangan: row.cells[6].children[0].value,
-          saldo: row.cells[7].children[0].value,
-          masuk: row.cells[8].children[0].value,
-          keluar: row.cells[9].children[0].value,
-          barangPengeluaran: row.cells[10].children[0].value
+          hargaSatuan: row.cells[4].children[0].value,
+          hargaTotal: row.cells[5].children[0].value,
+          saldo: row.cells[6].children[0].value,
+          masuk: row.cells[7].children[0].value,
+          keluarRp: row.cells[8].children[0].value,
+          barangKeluar: row.cells[9].children[0].value
         });
       }
       localStorage.setItem("laporanKeuangan", JSON.stringify(data));
@@ -241,13 +195,12 @@
             <td><input type="date" value="${row.tanggal}"></td>
             <td><input type="text" value="${row.menu}"></td>
             <td><input type="number" value="${row.pcs}"></td>
-            <td><input type="number" value="${row.harga}"></td>
-            <td><input type="number" value="${row.total}" readonly></td>
-            <td><input type="text" value="${row.keterangan}"></td>
+            <td><input type="number" value="${row.hargaSatuan}"></td>
+            <td><input type="number" value="${row.hargaTotal}" readonly></td>
             <td><input type="number" value="${row.saldo}" readonly></td>
             <td><input type="number" value="${row.masuk}"></td>
-            <td><input type="number" value="${row.keluar}"></td>
-            <td><input type="text" value="${row.barangPengeluaran}"></td>
+            <td><input type="number" value="${row.keluarRp}"></td>
+            <td><input type="text" value="${row.barangKeluar}"></td>
           `;
         });
       }
@@ -255,10 +208,41 @@
       tambahListener();
     }
 
+    // Tambah baris baru
+    function tambahBaris() {
+      let rowCount = table.rows.length;
+      let row = table.insertRow();
+      row.innerHTML = `
+        <td>${rowCount+1}</td>
+        <td><input type="date"></td>
+        <td><input type="text"></td>
+        <td><input type="number" value="0"></td>
+        <td><input type="number" value="0"></td>
+        <td><input type="number" value="0" readonly></td>
+        <td><input type="number" value="0" readonly></td>
+        <td><input type="number" value="0"></td>
+        <td><input type="number" value="0"></td>
+        <td><input type="text"></td>
+      `;
+      tambahListener();
+      hitungSaldo();
+    }
+
+    // Tambahkan listener
+    function tambahListener() {
+      for (let i = 0; i < table.rows.length; i++) {
+        let row = table.rows[i];
+        row.cells[3].children[0].addEventListener("input", hitungSaldo);
+        row.cells[4].children[0].addEventListener("input", hitungSaldo);
+        row.cells[7].children[0].addEventListener("input", hitungSaldo);
+        row.cells[8].children[0].addEventListener("input", hitungSaldo);
+      }
+    }
+
     // Export CSV
     function exportCSV() {
       hitungSaldo();
-      let csv = "No,Tanggal,Menu Pembelian,PCS,Harga Satuan,Harga Total,Keterangan,Saldo,Barang Masuk (PCS),Barang Keluar (PCS),Nama Barang Pengeluaran\n";
+      let csv = "No,Tanggal,Menu Pembelian,PCS,Harga Satuan,Harga Total,Saldo,Barang Masuk,Total Pengeluaran,Nama Barang Pengeluaran\n";
       for (let i = 0; i < table.rows.length; i++) {
         let row = table.rows[i];
         let values = [
@@ -271,8 +255,7 @@
           row.cells[6].children[0].value,
           row.cells[7].children[0].value,
           row.cells[8].children[0].value,
-          row.cells[9].children[0].value,
-          row.cells[10].children[0].value
+          row.cells[9].children[0].value
         ];
         csv += values.join(",") + "\n";
       }
@@ -283,7 +266,7 @@
       link.click();
     }
 
-    // Load data saat pertama kali
+    // Load saat pertama kali
     window.onload = () => {
       loadData();
     };
